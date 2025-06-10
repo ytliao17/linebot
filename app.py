@@ -46,8 +46,26 @@ def handle_message(event):
             reply_message = f"殘障車位剩餘:{remaining_slots}個空位"
         else:
             reply_message = "無法獲取數據。"
+    elif user_message == "電動車位":
+        response = requests.get('https://script.google.com/macros/s/AKfycbxDmIrP8EmoZNaUrLTG5twQ-D5aJnmCxkU8J8Fs0JAJWw451cat2oS7P7qXI17qIToBZQ/exec')
+        data = response.json()
+        if data['status'] == 'success':
+            last_record = data['data']
+            remaining_slots = last_record[0][2]
+            reply_message = f"殘障車位剩餘:{remaining_slots}個空位"
+        else:
+            reply_message = "無法獲取數據。"
+    elif user_message == "機車車位":
+        response = requests.get('https://script.google.com/macros/s/AKfycbwXwGzAn8wznt9eIYqa5n9-6WGpMiaHTFYUn8Y8yZYTf2O3zAsPVSUEw8mZrypv5bCxMw/exec')
+        data = response.json()
+        if data['status'] == 'success':
+            last_record = data['data']
+            remaining_slots = last_record[0][2]
+            reply_message = f"殘障車位剩餘:{remaining_slots}個空位"
+        else:
+            reply_message = "無法獲取數據。"
     else:
-        reply_message = "請回答「一般車位」或「殘障車位」。"
+        reply_message = "1.請回答您想查詢的車位：、一般車位、殘障車位、電動車位、機車車位。2.舉報違規車輛流程：先輸入舉報車輛-->等待機器人回覆收到-->收到後接著上傳圖片及原因(兩者都要)-->機器人會回覆已通報工作人員感謝您!。"
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply_message)
