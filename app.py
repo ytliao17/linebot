@@ -8,8 +8,8 @@ import requests
 from waitress import serve
 
 app = Flask(__name__)
-line_bot_api = LineBotApi('你的Channel Access Token')
-handler = WebhookHandler('你的Channel Secret')
+line_bot_api = LineBotApi('UoTKrw0p7aNjTjcxy4mhKn4fB8ckub8uojTEtUDmD+TiPl5Gzs7e5qPaCBEFEgG5fILPue9HeiYc5OEhAnL8pjLQMGwtYqCF/8XUtSoFlg9zFyxbhobtamezlBjnPhyBWfYzWjNyh+M6nGpWgpDmDgdB04t89/1O/w1cDnyilFU=')
+handler = WebhookHandler('a42f467a09899053c37f640cd7e748cb')
 
 # 用來暫存舉報資料
 session_data = {}
