@@ -52,7 +52,7 @@ def handle_message(event):
         if data['status'] == 'success':
             last_record = data['data']
             remaining_slots = last_record[0][2]
-            reply_message = f"殘障車位剩餘:{remaining_slots}個空位"
+            reply_message = f"電動車位剩餘:{remaining_slots}個空位"
         else:
             reply_message = "無法獲取數據。"
     elif user_message == "機車車位":
@@ -61,7 +61,7 @@ def handle_message(event):
         if data['status'] == 'success':
             last_record = data['data']
             remaining_slots = last_record[0][2]
-            reply_message = f"殘障車位剩餘:{remaining_slots}個空位"
+            reply_message = f"機車車位剩餘:{remaining_slots}個空位"
         else:
             reply_message = "無法獲取數據。"
     else:
