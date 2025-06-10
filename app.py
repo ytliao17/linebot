@@ -34,7 +34,7 @@ def handle_text(event):
         session_data[user_id] = {"text": None, "image": None}
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="請上傳違規車輛的照片與原因（文字）！")
+            TextSendMessage(text="請上傳違規車輛的照片（要有車牌）與原因（文字）！")
         )
         return
 
@@ -46,7 +46,7 @@ def handle_text(event):
         else:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="請上傳違規車輛圖片")
+                TextSendMessage(text="請上傳違規車輛圖片（要有車牌）")
             )
         return
 
