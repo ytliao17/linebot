@@ -58,7 +58,7 @@ def handle_text(event):
         url = 'https://script.google.com/macros/s/AKfycbwXwGzAn8wznt9eIYqa5n9-6WGpMiaHTFYUn8Y8yZYTf2O3zAsPVSUEw8mZrypv5bCxMw/exec'
         reply_message = fetch_parking_data(url, "機車車位")
     else:
-        reply_message = "1.請回答您想查詢的車位：一般車位、殘障車位、電動車位、機車車位。\n2.舉報違規車輛流程：輸入「舉報車輛」→ 等候提示 → 上傳圖片與原因 → 回覆確認。"
+        reply_message = "1.請回答您想查詢的車位：一般車位、殘障車位、電動車位、機車車位。\n2.舉報違規車輛流程：輸入「舉報車輛」→ 等候提示 → 上傳圖片與原因 → 回覆確認。\n3.有任何問題請撥打：(04)23924505聯絡工作人員。"
 
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
 
