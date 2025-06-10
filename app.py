@@ -29,7 +29,7 @@ def handle_text(event):
     user_id = event.source.user_id
     user_message = event.message.text.strip()
 
-    # 舉報功能流程
+    # 啟動舉報流程
     if user_message == "舉報車輛":
         session_data[user_id] = {"text": None, "image": None}
         line_bot_api.reply_message(
@@ -39,10 +39,17 @@ def handle_text(event):
         return
 
     if user_id in session_data:
-        if session_data[user_id]["text"] is None:
+        data = session_data[user_id]
+        if data["text"] is None:
             session_data[user_id]["text"] = user_message
             check_report_complete(event, user_id)
-            return
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="請上傳違規車輛圖片")
+            )
+        return
+
 
     # 車位查詢功能
     if user_message == "一般車位":
@@ -67,13 +74,21 @@ def handle_image(event):
     user_id = event.source.user_id
 
     if user_id in session_data:
-        session_data[user_id]["image"] = "收到圖片"
-        check_report_complete(event, user_id)
+        data = session_data[user_id]
+        if data["image"] is None:
+            session_data[user_id]["image"] = "收到圖片"
+            check_report_complete(event, user_id)
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="請輸入文字說明")
+            )
     else:
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="請先輸入「舉報車輛」以啟動回報流程。")
         )
+
 
 def check_report_complete(event, user_id):
     data = session_data.get(user_id, {})
