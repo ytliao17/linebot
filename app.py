@@ -29,7 +29,7 @@ def callback():
 def handle_message(event):
     user_message = event.message.text
     if user_message == "一般車位":
-        response = requests.get('https://script.google.com/macros/s/AKfycbzEWZvu8F6H98BDDzKSFf6iT0ykOpMYeeBqZwc95rqrodJCHWyxEtKH5lzm2z9-fhIUGg/exec')
+        response = requests.get('https://script.google.com/macros/s/AKfycby17RLGiuSu_gPrytoVJ4slyw-UN8IfQukNUibockqrt1aNbIEe0Q9EaosFhiVu5t4UFQ/exec')
         data = response.json()
         if data['status'] == 'success':
             last_record = data['data']
