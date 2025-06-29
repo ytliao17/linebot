@@ -5,14 +5,25 @@ from linebot.models import (
     MessageEvent, TextMessage, ImageMessage, TextSendMessage
 )
 import requests
+import mysql.connector
 from waitress import serve
 
 app = Flask(__name__)
+
+# LINE Bot 設定
 line_bot_api = LineBotApi('UoTKrw0p7aNjTjcxy4mhKn4fB8ckub8uojTEtUDmD+TiPl5Gzs7e5qPaCBEFEgG5fILPue9HeiYc5OEhAnL8pjLQMGwtYqCF/8XUtSoFlg9zFyxbhobtamezlBjnPhyBWfYzWjNyh+M6nGpWgpDmDgdB04t89/1O/w1cDnyilFU=')
 handler = WebhookHandler('a42f467a09899053c37f640cd7e748cb')
 
-# 用來暫存舉報資料
+# 暫存舉報資料
 session_data = {}
+
+# 資料庫設定
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'qwe26600099',
+    'database': 'park'
+}
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -29,7 +40,6 @@ def handle_text(event):
     user_id = event.source.user_id
     user_message = event.message.text.strip()
 
-    # 啟動舉報流程
     if user_message == "舉報車輛":
         session_data[user_id] = {"text": None, "image": None}
         line_bot_api.reply_message(
@@ -50,32 +60,17 @@ def handle_text(event):
             )
         return
 
-
     # 車位查詢功能
-    if user_message == "一般車位":
-        url = 'https://script.google.com/macros/s/AKfycby17RLGiuSu_gPrytoVJ4slyw-UN8IfQukNUibockqrt1aNbIEe0Q9EaosFhiVu5t4UFQ/exec'
-        reply_message = fetch_parking_data(url, "一般車位")
-    elif user_message == "殘障車位":
-        url = 'https://script.google.com/macros/s/AKfycbyACubqb08lPxc2uwDD9EjzhzJEq5s0jpCI1RrEMNLTXzLIWGY_y-7B7NeScjtVfFF0Sw/exec'
-        reply_message = fetch_parking_data(url, "殘障車位")
-    elif user_message == "電動車位":
-        url = 'https://script.google.com/macros/s/AKfycbyBxpedTwB0VP8063IUvKxGdo-sB4L1Et-NahYPDCkXO9Hna1tzZbPfAGOecZFLdDdx/exec'
-        reply_message = fetch_parking_data(url, "電動車位")
-    elif user_message == "機車車位":
-        url = 'https://script.google.com/macros/s/AKfycbwXwGzAn8wznt9eIYqa5n9-6WGpMiaHTFYUn8Y8yZYTf2O3zAsPVSUEw8mZrypv5bCxMw/exec'
-        reply_message = fetch_parking_data(url, "機車車位")
-    else:
-        reply_message = "1.請回答您想查詢的車位：一般車位、殘障車位、電動車位、機車車位。\n2.舉報違規車輛流程：輸入「舉報車輛」→ 等候提示 → 上傳圖片與原因 → 回覆確認。\n3.有任何問題請撥打：(04)23924505聯絡工作人員。"
-
+    reply_message = handle_parking_query(user_message)
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
 
 @handler.add(MessageEvent, message=ImageMessage)
 def handle_image(event):
     user_id = event.source.user_id
-
     if user_id in session_data:
         data = session_data[user_id]
         if data["image"] is None:
+            # 這裡先存「收到圖片」，你可以改存真實圖片URL
             session_data[user_id]["image"] = "收到圖片"
             check_report_complete(event, user_id)
         else:
@@ -89,15 +84,41 @@ def handle_image(event):
             TextSendMessage(text="請先輸入「舉報車輛」以啟動回報流程。")
         )
 
-
 def check_report_complete(event, user_id):
     data = session_data.get(user_id, {})
     if data.get("image") and data.get("text"):
+        # 寫入MySQL
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO reports (user_id, image_url, description) VALUES (%s, %s, %s)",
+            (user_id, data["image"], data["text"])
+        )
+        conn.commit()
+        conn.close()
+
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="已通報工作人員，感謝您的協助！")
         )
-        del session_data[user_id]  # 清除資料避免重複
+        del session_data[user_id]  # 清理暫存
+
+def handle_parking_query(user_message):
+    urls = {
+        "一般車位": 'https://script.google.com/macros/s/AKfycby17RLGiuSu_gPrytoVJ4slyw-UN8IfQukNUibockqrt1aNbIEe0Q9EaosFhiVu5t4UFQ/exec',
+        "殘障車位": 'https://script.google.com/macros/s/AKfycbyACubqb08lPxc2uwDD9EjzhzJEq5s0jpCI1RrEMNLTXzLIWGY_y-7B7NeScjtVfFF0Sw/exec',
+        "電動車位": 'https://script.google.com/macros/s/AKfycbyBxpedTwB0VP8063IUvKxGdo-sB4L1Et-NahYPDCkXO9Hna1tzZbPfAGOecZFLdDdx/exec',
+        "機車車位": 'https://script.google.com/macros/s/AKfycbwXwGzAn8wznt9eIYqa5n9-6WGpMiaHTFYUn8Y8yZYTf2O3zAsPVSUEw8mZrypv5bCxMw/exec'
+    }
+    if user_message in urls:
+        url = urls[user_message]
+        return fetch_parking_data(url, user_message)
+    else:
+        return (
+            "1.請回答您想查詢的車位：一般車位、殘障車位、電動車位、機車車位。\n"
+            "2.舉報違規車輛流程：輸入「舉報車輛」→ 等候提示 → 上傳圖片與原因 → 回覆確認。\n"
+            "3.如有問題請撥打：(04)23924505 聯絡工作人員。"
+        )
 
 def fetch_parking_data(url, type_name):
     try:
