@@ -1,4 +1,4 @@
-from flask import Flask, request, abort
+from flask import Flask, request, abort, render_template
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import (
@@ -131,6 +131,19 @@ def fetch_parking_data(url, type_name):
             return "無法獲取數據。"
     except:
         return "讀取資料錯誤，請稍後再試。"
+@app.route("/reports")
+def reports():
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="qwe26600099",
+        database="park"
+    )
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM reports ORDER BY created_at DESC")
+    data = cursor.fetchall()
+    conn.close()
+    return render_template("reports.html", reports=data)
 
 if __name__ == "__main__":
     serve(app, host='0.0.0.0', port=3000)
