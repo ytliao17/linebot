@@ -19,7 +19,7 @@ session_data = {}
 
 # 資料庫設定
 db_config = {
-    'host': 'dpg-d1h8l56mcj7s73djpiu0-a',
+    'host': 'dpg-d1h8l56mcj7s73djpiu0-a.oregon-postgres.render.com',
     'user': 'park_user',
     'password': 'on0eDp2TKc9RrieojfVzOWpD2K6clg59',
     'database': 'park',
