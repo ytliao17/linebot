@@ -134,7 +134,13 @@ def fetch_parking_data(url, type_name):
         return "讀取資料錯誤，請稍後再試。"
 @app.route("/reports")
 def reports():
-    conn = psycopg2.connect(**db_config)
+    conn = psycopg2.connect(
+        'host': 'dpg-d1h8l56mcj7s73djpiu0-a',
+        'user': 'park_user',
+        'password': 'on0eDp2TKc9RrieojfVzOWpD2K6clg59',
+        'database': 'park',
+        'port': 5432
+    )
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cursor.execute("SELECT * FROM reports ORDER BY created_at DESC")
     data = cursor.fetchall()
