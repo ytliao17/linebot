@@ -6,25 +6,26 @@ from linebot.models import (
 )
 import requests
 import psycopg2
+import psycopg2.extras
 from waitress import serve
 
 app = Flask(__name__)
 
-# LINE Bot 設定
+# LINE Bot 設定（你提供的）
 line_bot_api = LineBotApi('UoTKrw0p7aNjTjcxy4mhKn4fB8ckub8uojTEtUDmD+TiPl5Gzs7e5qPaCBEFEgG5fILPue9HeiYc5OEhAnL8pjLQMGwtYqCF/8XUtSoFlg9zFyxbhobtamezlBjnPhyBWfYzWjNyh+M6nGpWgpDmDgdB04t89/1O/w1cDnyilFU=')
 handler = WebhookHandler('a42f467a09899053c37f640cd7e748cb')
 
 # 暫存舉報資料
 session_data = {}
 
-# 資料庫設定
+# PostgreSQL 設定（你提供的）
 db_config = {
     'host': 'dpg-d1h8l56mcj7s73djpiu0-a.oregon-postgres.render.com',
     'user': 'park_user',
     'password': 'on0eDp2TKc9RrieojfVzOWpD2K6clg59',
-    'database': 'park',
+    'dbname': 'park',
     'port': 5432,
-    'sslmode': 'require' 
+    'sslmode': 'require'
 }
 
 @app.route("/callback", methods=['POST'])
@@ -89,21 +90,23 @@ def handle_image(event):
 def check_report_complete(event, user_id):
     data = session_data.get(user_id, {})
     if data.get("image") and data.get("text"):
-        # 寫入MySQL
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO reports (user_id, image_url, description) VALUES (%s, %s, %s)",
-            (user_id, data["image"], data["text"])
-        )
-        conn.commit()
-        conn.close()
+        try:
+            conn = psycopg2.connect(**db_config)
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO reports (user_id, image_url, description) VALUES (%s, %s, %s)",
+                (user_id, data["image"], data["text"])
+            )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print("資料庫寫入失敗:", e)
 
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="已通報工作人員，感謝您的協助！")
         )
-        del session_data[user_id]  # 清理暫存
+        del session_data[user_id]
 
 def handle_parking_query(user_message):
     urls = {
@@ -113,8 +116,7 @@ def handle_parking_query(user_message):
         "機車車位": 'https://script.google.com/macros/s/AKfycbwXwGzAn8wznt9eIYqa5n9-6WGpMiaHTFYUn8Y8yZYTf2O3zAsPVSUEw8mZrypv5bCxMw/exec'
     }
     if user_message in urls:
-        url = urls[user_message]
-        return fetch_parking_data(url, user_message)
+        return fetch_parking_data(urls[user_message], user_message)
     else:
         return (
             "1.請回答您想查詢的車位：一般車位、殘障車位、電動車位、機車車位。\n"
@@ -133,20 +135,18 @@ def fetch_parking_data(url, type_name):
             return "無法獲取數據。"
     except:
         return "讀取資料錯誤，請稍後再試。"
+
 @app.route("/reports")
 def reports():
-    conn = psycopg2.connect(
-        'host': 'dpg-d1h8l56mcj7s73djpiu0-a',
-        'user': 'park_user',
-        'password': 'on0eDp2TKc9RrieojfVzOWpD2K6clg59',
-        'database': 'park',
-        'port': 5432
-    )
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cursor.execute("SELECT * FROM reports ORDER BY created_at DESC")
-    data = cursor.fetchall()
-    conn.close()
-    return render_template("reports.html", reports=data)
+    try:
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("SELECT * FROM reports ORDER BY created_at DESC")
+        data = cursor.fetchall()
+        conn.close()
+        return render_template("reports.html", reports=data)
+    except Exception as e:
+        return f"資料庫錯誤：{e}"
 
 if __name__ == "__main__":
     serve(app, host='0.0.0.0', port=3000)
