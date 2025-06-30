@@ -23,7 +23,7 @@ db_config = {
     'user': 'park_user',
     'password': 'on0eDp2TKc9RrieojfVzOWpD2K6clg59',
     'database': 'park',
-    'port': 5432
+    'port': 5432,
     'sslmode': 'require' 
 }
 
