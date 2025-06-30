@@ -3,4 +3,4 @@ line-bot-sdk
 requests
 waitress
 gunicorn
-mysql-connector-python
+psycopg2-binary
